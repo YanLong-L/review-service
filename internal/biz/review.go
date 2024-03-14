@@ -2,13 +2,14 @@ package biz
 
 import (
 	"context"
+	"review-service/internal/data/model"
 
 	"github.com/go-kratos/kratos/v2/log"
 )
 
 // ReviewRepo
 type ReviewRepo interface {
-	Save(context.Context, *Greeter) (*Greeter, error)
+	SaveReview(context.Context, *model.ReviewInfo) (*model.ReviewInfo, error)
 }
 
 // ReviewUsecase is a review usecase.
@@ -22,8 +23,14 @@ func NewReviewUsecase(repo ReviewRepo, logger log.Logger) *ReviewUsecase {
 	return &ReviewUsecase{repo: repo, log: log.NewHelper(logger)}
 }
 
-// CreateGreeter creates a Greeter, and returns the new Greeter.
-func (uc *ReviewUsecase) Save(ctx context.Context, g *Greeter) (*Greeter, error) {
-	uc.log.WithContext(ctx).Infof("CreateGreeter: %v", g.Hello)
-	return uc.repo.Save(ctx, g)
+// CreateReview 创建评价
+// 实现业务逻辑的地方
+// service层调用该方法
+func (uc *ReviewUsecase) CreateReview(ctx context.Context, review *model.ReviewInfo) (*model.ReviewInfo, error) {
+	uc.log.WithContext(ctx).Debugf("[biz] CreateReview, req:%v", review)
+	// 1、数据校验
+	// 2、生成review ID
+	// 3、查询订单和商品快照信息
+	// 4、拼装数据入库
+	return uc.repo.SaveReview(ctx, review)
 }

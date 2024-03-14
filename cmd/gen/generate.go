@@ -52,6 +52,7 @@ func main() {
 	c := config.New(
 		config.WithSource(
 			file.NewSource(flagconf),
+			//file.NewSource("../../configs/config.yaml"),
 		),
 	)
 	defer c.Close()
