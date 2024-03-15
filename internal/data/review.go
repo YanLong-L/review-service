@@ -20,7 +20,17 @@ func NewReviewRepo(data *Data, logger log.Logger) biz.ReviewRepo {
 	}
 }
 
-func (r reviewRepo) SaveReview(ctx context.Context, review *model.ReviewInfo) (*model.ReviewInfo, error) {
-	//TODO implement me
-	panic("implement me")
+// GetReviewByOrderID 通过订单ID查找评价数据
+func (r *reviewRepo) GetReviewByOrderID(ctx context.Context, orderID int64) ([]*model.ReviewInfo, error) {
+	res, err := r.data.query.ReviewInfo.WithContext(ctx).
+		Where(r.data.query.ReviewInfo.OrderID.Eq(orderID)).
+		Find()
+	return res, err
+}
+
+// SaveReview 创建评价
+func (r *reviewRepo) SaveReview(ctx context.Context, review *model.ReviewInfo) (*model.ReviewInfo, error) {
+	err := r.data.query.ReviewInfo.WithContext(ctx).
+		Save(review)
+	return review, err
 }

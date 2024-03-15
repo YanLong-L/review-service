@@ -3,6 +3,8 @@ module review-service
 go 1.19
 
 require (
+	github.com/bwmarrin/snowflake v0.3.0
+	github.com/envoyproxy/protoc-gen-validate v0.10.1
 	github.com/go-kratos/kratos/v2 v2.7.2
 	github.com/google/wire v0.5.0
 	github.com/pkg/errors v0.9.1

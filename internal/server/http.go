@@ -1,6 +1,7 @@
 package server
 
 import (
+	"github.com/go-kratos/kratos/v2/middleware/validate"
 	v1 "review-service/api/review/v1"
 	"review-service/internal/conf"
 	"review-service/internal/service"
@@ -15,6 +16,7 @@ func NewHTTPServer(c *conf.Server, reviewer *service.ReviewService, logger log.L
 	var opts = []http.ServerOption{
 		http.Middleware(
 			recovery.Recovery(),
+			validate.Validator(),
 		),
 	}
 	if c.Http.Network != "" {
