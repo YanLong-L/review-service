@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"fmt"
 	"review-service/internal/biz"
 	"review-service/internal/data/model"
 
@@ -47,15 +48,48 @@ func (s *ReviewService) CreateReview(ctx context.Context, req *pb.CreateReviewRe
 		ReviewID: review.ReviewID,
 	}, err
 }
-func (s *ReviewService) UpdateReview(ctx context.Context, req *pb.UpdateReviewRequest) (*pb.UpdateReviewReply, error) {
-	return &pb.UpdateReviewReply{}, nil
+
+// AuditReview 审核评论
+func (s *ReviewService) AuditReview(ctx context.Context, req *pb.AuditReviewRequest) (*pb.AuditReviewReply, error) {
+	fmt.Printf("AuditReview req:%#v\n", req)
+	err := s.uc.AuditReview(ctx, &biz.AuditParam{
+		ReviewID:  req.GetReviewID(),
+		OpUser:    req.GetOpUser(),
+		OpReason:  req.GetOpReason(),
+		OpRemarks: req.GetOpRemarks(),
+		Status:    req.GetStatus(),
+	})
+	if err != nil {
+		return nil, err
+	}
+	return &pb.AuditReviewReply{
+		ReviewID: req.ReviewID,
+		Status:   req.Status,
+	}, nil
 }
-func (s *ReviewService) DeleteReview(ctx context.Context, req *pb.DeleteReviewRequest) (*pb.DeleteReviewReply, error) {
-	return &pb.DeleteReviewReply{}, nil
+
+// ReplyReview 回复评价
+func (s *ReviewService) ReplyReview(ctx context.Context, req *pb.ReplyReviewRequest) (*pb.ReplyReviewReply, error) {
+	fmt.Printf("[service] ReplyReview req:%#v\n", req)
+	// 调用biz层
+	reply, err := s.uc.CreateReply(ctx, &biz.ReplyParam{
+		ReviewID:  req.GetReviewID(),
+		StoreID:   req.GetStoreID(),
+		Content:   req.GetContent(),
+		PicInfo:   req.GetPicInfo(),
+		VideoInfo: req.GetVideoInfo(),
+	})
+	if err != nil {
+		return nil, err
+	}
+	return &pb.ReplyReviewReply{ReplyID: reply.ReplyID}, nil
 }
-func (s *ReviewService) GetReview(ctx context.Context, req *pb.GetReviewRequest) (*pb.GetReviewReply, error) {
-	return &pb.GetReviewReply{}, nil
+func (s *ReviewService) AppealReview(ctx context.Context, req *pb.AppealReviewRequest) (*pb.AppealReviewReply, error) {
+	return &pb.AppealReviewReply{}, nil
 }
-func (s *ReviewService) ListReview(ctx context.Context, req *pb.ListReviewRequest) (*pb.ListReviewReply, error) {
-	return &pb.ListReviewReply{}, nil
+func (s *ReviewService) AuditAppeal(ctx context.Context, req *pb.AuditAppealRequest) (*pb.AuditAppealReply, error) {
+	return &pb.AuditAppealReply{}, nil
+}
+func (s *ReviewService) ListReviewByUserID(ctx context.Context, req *pb.ListReviewByUserIDRequest) (*pb.ListReviewByUserIDReply, error) {
+	return &pb.ListReviewByUserIDReply{}, nil
 }
