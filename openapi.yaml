@@ -169,6 +169,16 @@ paths:
                   required: true
                   schema:
                     type: string
+                - name: page
+                  in: query
+                  schema:
+                    type: integer
+                    format: int32
+                - name: size
+                  in: query
+                  schema:
+                    type: integer
+                    format: int32
             responses:
                 "200":
                     description: OK
@@ -217,6 +227,8 @@ components:
             properties:
                 appealID:
                     type: string
+                reviewID:
+                    type: string
                 status:
                     type: integer
                     format: int32
@@ -261,6 +273,8 @@ components:
                 userID:
                     type: string
                 orderID:
+                    type: string
+                storeID:
                     type: string
                 score:
                     type: integer

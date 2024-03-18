@@ -10,7 +10,6 @@ import (
 	"github.com/go-kratos/kratos/v2/log"
 )
 
-// ReviewRepo
 type ReviewRepo interface {
 	SaveReview(context.Context, *model.ReviewInfo) (*model.ReviewInfo, error)
 	GetReviewByOrderID(context.Context, int64) ([]*model.ReviewInfo, error)
@@ -18,20 +17,21 @@ type ReviewRepo interface {
 	SaveReply(context.Context, *model.ReviewReplyInfo) (*model.ReviewReplyInfo, error)
 	GetReviewReply(context.Context, int64) (*model.ReviewReplyInfo, error)
 	AuditReview(context.Context, *AuditParam) error
-	AppealReview(context.Context, *AppealParam) error
+	AppealReview(context.Context, *AppealParam) (*model.ReviewAppealInfo, error)
 	AuditAppeal(context.Context, *AuditAppealParam) error
 	ListReviewByUserID(ctx context.Context, userID int64, offset, limit int) ([]*model.ReviewInfo, error)
 }
 
-// ReviewUsecase is a review usecase.
 type ReviewUsecase struct {
 	repo ReviewRepo
 	log  *log.Helper
 }
 
-// NewReviewUsecase new a Review usecase.
 func NewReviewUsecase(repo ReviewRepo, logger log.Logger) *ReviewUsecase {
-	return &ReviewUsecase{repo: repo, log: log.NewHelper(logger)}
+	return &ReviewUsecase{
+		repo: repo,
+		log:  log.NewHelper(logger),
+	}
 }
 
 // CreateReview 创建评价
@@ -40,8 +40,8 @@ func NewReviewUsecase(repo ReviewRepo, logger log.Logger) *ReviewUsecase {
 func (uc *ReviewUsecase) CreateReview(ctx context.Context, review *model.ReviewInfo) (*model.ReviewInfo, error) {
 	uc.log.WithContext(ctx).Debugf("[biz] CreateReview, req:%v", review)
 	// 1、数据校验
-	// 1.1 参数基础校验，这一层可以通过注册validator中间件来做
-	// 1.2 参数业务校验
+	// 1.1 参数基础校验：正常来说不应该放在这一层，你在上一层或者框架层都应该能拦住（validate参数校验）
+	// 1.2 参数业务校验：带业务逻辑的参数校验，比如已经评价过的订单不能再创建评价
 	reviews, err := uc.repo.GetReviewByOrderID(ctx, review.OrderID)
 	if err != nil {
 		return nil, v1.ErrorDbFailed("查询数据库失败")
@@ -51,9 +51,12 @@ func (uc *ReviewUsecase) CreateReview(ctx context.Context, review *model.ReviewI
 		fmt.Printf("订单已评价, len(reviews):%d\n", len(reviews))
 		return nil, v1.ErrorOrderReviewed("订单:%d已评价", review.OrderID)
 	}
-	// 2、生成review ID (这里借助雪花算法)
+	// 2、生成review ID
+	// 这里可以使用雪花算法自己生成
+	// 也可以直接接入公司内部的分布式ID生成服务（前提是公司内部有这种服务）
 	review.ReviewID = snowflake.GenID()
 	// 3、查询订单和商品快照信息
+	// 实际业务场景下就需要查询订单服务和商家服务（比如说通过RPC调用订单服务和商家服务）
 	// 4、拼装数据入库
 	return uc.repo.SaveReview(ctx, review)
 }
@@ -86,7 +89,27 @@ func (uc *ReviewUsecase) AuditReview(ctx context.Context, param *AuditParam) err
 }
 
 // AppealReview 申诉评价
-func (uc ReviewUsecase) AppealReview(ctx context.Context, param *AppealParam) error {
+func (uc ReviewUsecase) AppealReview(ctx context.Context, param *AppealParam) (*model.ReviewAppealInfo, error) {
 	uc.log.WithContext(ctx).Debugf("[biz] AppealReview param:%v", param)
 	return uc.repo.AppealReview(ctx, param)
+}
+
+// AuditAppeal 审核申诉
+func (uc ReviewUsecase) AuditAppeal(ctx context.Context, param *AuditAppealParam) error {
+	uc.log.WithContext(ctx).Debugf("[biz] AuditAppeal param:%v", param)
+	return uc.repo.AuditAppeal(ctx, param)
+}
+
+// ListReviewByUserID 根据userID分页查询评价
+func (uc ReviewUsecase) ListReviewByUserID(ctx context.Context, userID int64, page, size int) ([]*model.ReviewInfo, error) {
+	if page <= 0 {
+		page = 1
+	}
+	if size <= 0 || size > 50 {
+		size = 10
+	}
+	offset := (page - 1) * size
+	limit := size
+	uc.log.WithContext(ctx).Debugf("[biz] ListReviewByUserID userID:%v", userID)
+	return uc.repo.ListReviewByUserID(ctx, userID, offset, limit)
 }
