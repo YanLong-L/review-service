@@ -152,3 +152,29 @@ func (s *ReviewService) ListReviewByUserID(ctx context.Context, req *pb.ListRevi
 	}
 	return &pb.ListReviewByUserIDReply{List: list}, nil
 }
+
+func (s *ReviewService) ListReviewByStoreID(ctx context.Context, req *pb.ListReviewByStoreIDRequest) (*pb.ListReviewByStoreIDReply, error) {
+	fmt.Printf("[service] ListReviewByStoreID req:%#v\n", req)
+	reviewList, err := s.uc.ListReviewByStoreID(ctx, req.StoreID, int(req.Page), int(req.Size))
+	if err != nil {
+		return nil, err
+	}
+	// format
+	list := make([]*pb.ReviewInfo, 0, len(reviewList))
+	for _, r := range reviewList {
+		list = append(list, &pb.ReviewInfo{
+			ReviewID:     r.ReviewID,
+			UserID:       r.UserID,
+			OrderID:      r.OrderID,
+			Score:        r.Score,
+			ServiceScore: r.ServiceScore,
+			ExpressScore: r.ExpressScore,
+			Content:      r.Content,
+			PicInfo:      r.PicInfo,
+			VideoInfo:    r.VideoInfo,
+			Status:       r.Status,
+		})
+	}
+
+	return &pb.ListReviewByStoreIDReply{List: list}, nil
+}

@@ -30,7 +30,12 @@ func wireApp(confServer *conf.Server, kafka *conf.Kafka, elasticsearch *conf.Ela
 	if err != nil {
 		return nil, nil, err
 	}
-	dataData, cleanup, err := data.NewData(db, logger)
+	typedClient, err := data.NewESClient(elasticsearch)
+	if err != nil {
+		return nil, nil, err
+	}
+	client := data.NewRedisClient(confData)
+	dataData, cleanup, err := data.NewData(db, typedClient, client, logger)
 	if err != nil {
 		return nil, nil, err
 	}
