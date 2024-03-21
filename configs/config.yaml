@@ -8,7 +8,7 @@ server:
 data:
   database:
     driver: mysql
-    source: root:mysql@tcp(127.0.0.1:3307)/review-service?parseTime=True&loc=Local
+    source: root:root@tcp(127.0.0.1:13316)/review-service?parseTime=True&loc=Local
   redis:
     addr: 127.0.0.1:6379
     read_timeout: 0.2s
@@ -16,4 +16,12 @@ data:
 snowflake:
   start_time: "2023-10-01"
   machine_id: 1
-
+kafka:
+  brokers:
+    - "localhost:9092"
+  group_id: "review-job"
+  topic: "example"
+elasticsearch:
+  addresses:
+    - "http://localhost:9200"
+  index: "review"

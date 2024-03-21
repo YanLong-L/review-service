@@ -9,6 +9,8 @@ message Bootstrap {
   Server server = 1;
   Data data = 2;
   Snowflake snowflake = 3;
+  Kafka kafka = 4;
+  Elasticsearch elasticsearch = 5;
 }
 
 message Server {
@@ -55,4 +57,15 @@ message Registry {
     string scheme = 2;
   }
   Consul consul = 1;
+}
+
+message Kafka {
+  repeated string brokers = 1;
+  string group_id = 2;
+  string topic = 3;
+}
+
+message Elasticsearch {
+  repeated string addresses = 1;
+  string index = 2;
 }

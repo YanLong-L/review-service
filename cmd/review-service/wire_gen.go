@@ -12,6 +12,7 @@ import (
 	"review-service/internal/biz"
 	"review-service/internal/conf"
 	"review-service/internal/data"
+	"review-service/internal/job"
 	"review-service/internal/server"
 	"review-service/internal/service"
 )
@@ -23,7 +24,7 @@ import (
 // Injectors from wire.go:
 
 // wireApp init kratos application.
-func wireApp(confServer *conf.Server, registry *conf.Registry, confData *conf.Data, logger log.Logger) (*kratos.App, func(), error) {
+func wireApp(confServer *conf.Server, kafka *conf.Kafka, elasticsearch *conf.Elasticsearch, registry *conf.Registry, confData *conf.Data, logger log.Logger) (*kratos.App, func(), error) {
 	registrar := server.NewRegistrar(registry)
 	db, err := data.NewDB(confData)
 	if err != nil {
@@ -38,7 +39,14 @@ func wireApp(confServer *conf.Server, registry *conf.Registry, confData *conf.Da
 	reviewService := service.NewReviewService(reviewUsecase)
 	grpcServer := server.NewGRPCServer(confServer, reviewService, logger)
 	httpServer := server.NewHTTPServer(confServer, reviewService, logger)
-	app := newApp(logger, registrar, grpcServer, httpServer)
+	reader := job.NewKafkaReader(kafka)
+	esClient, err := job.NewESClient(elasticsearch)
+	if err != nil {
+		cleanup()
+		return nil, nil, err
+	}
+	jobWorker := job.NewJobWorker(reader, esClient, logger)
+	app := newApp(logger, registrar, grpcServer, httpServer, jobWorker)
 	return app, func() {
 		cleanup()
 	}, nil

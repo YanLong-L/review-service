@@ -4,6 +4,7 @@ import (
 	"flag"
 	"github.com/go-kratos/kratos/v2/registry"
 	"os"
+	"review-service/internal/job"
 	"review-service/pkg/snowflake"
 
 	"review-service/internal/conf"
@@ -35,7 +36,7 @@ func init() {
 	flag.StringVar(&flagconf, "conf", "../../configs", "config path, eg: -conf config.yaml")
 }
 
-func newApp(logger log.Logger, r registry.Registrar, gs *grpc.Server, hs *http.Server) *kratos.App {
+func newApp(logger log.Logger, r registry.Registrar, gs *grpc.Server, hs *http.Server, js *job.JobWorker) *kratos.App {
 	return kratos.New(
 		kratos.ID(id),
 		kratos.Name(Name),
@@ -45,6 +46,7 @@ func newApp(logger log.Logger, r registry.Registrar, gs *grpc.Server, hs *http.S
 		kratos.Server(
 			gs,
 			hs,
+			js,
 		),
 		kratos.Registrar(r), // 服务注册
 	)
@@ -82,7 +84,7 @@ func main() {
 		panic(err)
 	}
 
-	app, cleanup, err := wireApp(bc.Server, &rc, bc.Data, logger)
+	app, cleanup, err := wireApp(bc.Server, bc.Kafka, bc.Elasticsearch, &rc, bc.Data, logger)
 	if err != nil {
 		panic(err)
 	}
